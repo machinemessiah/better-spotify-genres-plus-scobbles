@@ -14,6 +14,7 @@
   "scripts": {
     "lint": "tsc",
     "build": "tsup && move-cli ./dist/spotifyGenres.global.js ./dist/spotifyGenres.js",
+    "dev": "tsup --no-minify && move-cli ./dist/spotifyGenres.global.js ./dist/spotifyGenresPlusScrobbles.js",
     "move:windows": "powershell Move-Item -Force -Path .\\dist\\spotifyGenres.js -Destination $env:USERPROFILE\\AppData\\Roaming\\spicetify\\Extensions\\spotifyGenres.js"
   },
   "devDependencies": {
