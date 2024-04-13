@@ -6,6 +6,8 @@ import type * as ReactTypes from "react";
 import type { CustomWindow } from "./window";
 declare let window: CustomWindow;
 
+const LOG_PREFIX = "[better-spotify-genres]";
+
 function initializeSpotifyGenres(): void {
   // Make sure everything is loaded.
   if (!(Spicetify.CosmosAsync && Spicetify.Platform && Spicetify.URI && Spicetify.Player.data)) {
@@ -217,6 +219,7 @@ function initializeSpotifyGenres(): void {
     let allGenres = await getAllArtistsGenres(allArtistURI);
 
     if (!allGenres) {
+      console.warn(LOG_PREFIX, "No genres found for the current track. Removing...");
       allGenresForPopupModal = []
       removeGenresFromUI()
       return;
@@ -244,10 +247,10 @@ function initializeSpotifyGenres(): void {
     }
 
     const allGenreElementsHTML = allGenreElements.join("")
-    if (genreContainer) genreContainer.innerHTML = allGenreElementsHTML;
+    if (genreContainer !== null) genreContainer.innerHTML = allGenreElementsHTML;
 
     infoContainer = await waitForElement("div.main-trackInfo-container", 1000) as HTMLDivElement | null;
-    if (genreContainer && infoContainer) {
+    if (genreContainer !== null && infoContainer !== null) {
       // Fix the grid for the info container.
       infoContainer.style.gridTemplate = '"title title" "badges subtitle" "genres genres" / auto 1fr auto';
       infoContainer.appendChild(genreContainer)
@@ -511,7 +514,7 @@ function initializeSpotifyGenres(): void {
   async function removeGenresFromUI(): Promise<void> {
     infoContainer = await waitForElement("div.main-trackInfo-container", 1000) as HTMLDivElement | null;
     try {
-      if (!infoContainer || !genreContainer) return;
+      if (infoContainer === null || genreContainer === null) return;
       infoContainer.style.removeProperty("grid-template")
       infoContainer.removeChild(genreContainer);
     } catch {}
@@ -519,12 +522,13 @@ function initializeSpotifyGenres(): void {
 
   async function updateGenres(): Promise<void> {
     if (!CONFIG.state || Spicetify.Player.data.item.metadata.is_local || Spicetify.URI.fromString(Spicetify.Player.data.item.uri).type !== "track") {
+      console.warn(LOG_PREFIX, "State is disabled or the current track is local. Removing...");
       removeGenresFromUI();
       return;
     }
 
-    injectGenre();
-    updateLastFmTags();
+    await updateLastFmTags();
+    await injectGenre();
   }
 
   function artistPageGenreOnClick(dataValue: string): void {
